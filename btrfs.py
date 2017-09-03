@@ -1,4 +1,6 @@
+from collections import namedtuple
 import subprocess
+import datetime
 import time
 import os
 import re
@@ -27,7 +29,7 @@ def subvolumes(path=None):
   d = p.communicate()
 
   if p.returncode:
-    raise BTRFSException(d[1].decode())
+    raise BTRFSError(d[1].decode())
 
   volumes = d[0].decode()
   volumes = volumes.split('\n')
@@ -55,6 +57,7 @@ def timestamp_subvolumes(path=None):
   Returns a list of subvolumes and the timestamp represented in the name.
   ('/snapshots/2017_08_14_20_44_21', a time object that can be compared with >, <, ==)
   """
+  snapshot = namedtuple('snapshot', ['time', 'path'])
   volumes = subvolumes(path=path)
   _volumes = []
   for v in volumes:
@@ -64,7 +67,7 @@ def timestamp_subvolumes(path=None):
     except ValueError:
       print("skipping invalid formatted snapshot '{}'".format(v))
       continue
-    _volumes.append((v, timestamp))
+    _volumes.append(snapshot(timestamp, v))
   volumes = _volumes
   return volumes
 
@@ -138,4 +141,6 @@ def test():
 
 
 if __name__ == '__main__':
-  timestamp_snapshot('/data', '/')
+  v = timestamp_subvolumes()
+  for i in v:
+    print(i)
